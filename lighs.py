@@ -3,7 +3,6 @@ import datetime
 
 class MotionLights(appapi.AppDaemon):
     def initialize(self):
-        print("qui")
         self._lights = self.args.get("lights", [])
         self._motion = self.args.get("motion", None)
         self._luminosity = self.args.get("luminosity", [])
@@ -67,6 +66,12 @@ class MotionLights(appapi.AppDaemon):
         self.log("Got luminosity for "+entity+" "+new)
         self._luma_val[int(kwargs["index"])] = float(new)
 
-    def reset_status(self, **kwargs):
+    def reset_status(self, kwargs):
         self.log("Resetting the disabler")
         self.turn_off(self._disabler)
+
+
+class NightLight(MotionLights):
+    def initialize(self):
+        super(MotionLights, self).initialize()
+        self._brightlight_start = self.args.get("lights", [])
