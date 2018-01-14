@@ -1,6 +1,10 @@
 import appdaemon.appapi as appapi
 
 #
+# This file is not created by me but by runningman84.
+# the original file shared does not have any copyright notice.
+# I would like to thank you runningman84 for his work. 
+# The original file was found here: https://gist.github.com/runningman84/b96a331b3486dbd1f5f2d00bc85d99ed
 # AlarmSystem App
 #
 # Args:
