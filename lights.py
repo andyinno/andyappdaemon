@@ -1,8 +1,10 @@
 import appdaemon.appapi as appapi
 import datetime
 
+
 class MotionLights(appapi.AppDaemon):
     def initialize(self):
+        print("MotionLights initialize")
         self._lights = self.args.get("lights", [])
         self._motion = self.args.get("motion", None)
         self._luminosity = self.args.get("luminosity", [])
@@ -21,6 +23,7 @@ class MotionLights(appapi.AppDaemon):
             self.listen_state(self.luminosity, item, index=i)
             i += 1
             self._luma_val.append(0)
+
         time = datetime.time(6, 0, 0)
         self.run_daily(self.reset_status, time)
 
@@ -40,6 +43,9 @@ class MotionLights(appapi.AppDaemon):
             return
 
         self.log("luma %d is ok for controlling lights." % (luma))
+        self.turn_on_lights()
+
+    def turn_on_lights(self):
         for light in self._lights:
             self.turn_on(light)
         if self._timeout is not None:
@@ -73,5 +79,35 @@ class MotionLights(appapi.AppDaemon):
 
 class NightLight(MotionLights):
     def initialize(self):
-        super(MotionLights, self).initialize()
-        self._brightlight_start = self.args.get("lights", [])
+        print("NightLight initialize")
+        super(NightLight, self).initialize()
+        self._brightlight_start = datetime.datetime.strptime(self.args.get("brightlight_start", "0:0:0"), "%H:%M:%S").time()
+        self._brightlight_end = datetime.datetime.strptime(self.args.get("brightlight_end", "0:0:0"), "%H:%M:%S").time()
+        self._bright_value = self.args.get("bright_value", 0)
+        self._lowbright_value = self.args.get("lowbright_value", 0)
+        self._rgbcolor_value = self.args.get("rgbcolor_value", 0)
+        self._lowrgbcolor_value = self.args.get("lowrgbcolor_value", 0)
+
+        self.log("Got starting time {}".format(self._brightlight_start))
+        self.log("Got ending time {}".format(self._brightlight_end))
+        self.log("Got bright_value  {}".format(self._bright_value))
+        self.log("Got lowbright_value {}".format(self._lowbright_value))
+        self.log("Got rgbcolor_value {}".format(self._rgbcolor_value))
+        self.log("Got lowrgbcolor_value {}".format(self._lowrgbcolor_value))
+
+    def turn_on_lights(self):
+        self.log("turn on lights")
+        now = self.time()
+
+        if self._brightlight_end  > now  and now > self._brightlight_start:
+            brightness = self._bright_value
+            color = self._rgbcolor_value
+        else:
+            brightness = self._lowbright_value
+            color = self._lowrgbcolor_value
+
+        for light in self._lights:
+            self.log("turning on light {} with {} {}".format(light, brightness, color))
+            self.turn_on(light, color_name=color, brightness=brightness)
+        if self._timeout is not None:
+            self.cancel_timer(self._timeout)
