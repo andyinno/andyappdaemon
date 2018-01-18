@@ -32,7 +32,7 @@ def _get_red(temperature: float) -> float:
 def _get_green(temperature: float) -> float:
     """Get the green component of the given color temp in RGB space."""
     if temperature <= 66:
-        green = 99.4708025861 * math.log(temperature) - 161.1195681661
+        green = 99.4708025861 * math.log(temperature) - 150#161.1195681661
     else:
         green = 288.1221695283 * math.pow(temperature - 60, -0.0755148492)
     return _bound(green)
@@ -40,7 +40,7 @@ def _get_green(temperature: float) -> float:
 
 def _get_blue(temperature: float) -> float:
     """Get the blue component of the given color temperature in RGB space."""
-    if temperature >= 66:
+    if temperature >= 105: #66:
         return 255
     if temperature <= 19:
         return 0
@@ -96,7 +96,7 @@ def color_RGB_to_xy(iR: int, iG: int, iB: int):
     x = X / (X + Y + Z)
     y = Y / (X + Y + Z)
 
-    Y *= 1.35
+#    Y *= 1.15
     # Brightness
     Y = 1 if Y > 1 else Y
     brightness = round(Y * 255)
@@ -231,7 +231,7 @@ class FluxLight(MotionLights):
         self.log("Got stop color {}".format(self._stop_colortemp))
         self.log("Got sunset color {}".format(self._sunset_colortemp))
 
-        self.turn_on_lights()
+#        self.turn_on_lights()
 
     def turn_on_lights(self):
         self.log("FluxLight turn on lights")
@@ -239,7 +239,7 @@ class FluxLight(MotionLights):
         now = self.datetime()
         start_time = now.replace(hour=self._start_time.hour, minute=self._start_time.minute, second=self._start_time.second)
         stop_time = now.replace(hour=self._stop_time.hour, minute=self._stop_time.minute, second=self._stop_time.second)
-        sunset = self.sunset()+datetime.timedelta(hours=2)
+        sunset = self.sunset()
 
         if stop_time <= start_time:
             self.log("stop_time does not happen in the same day as start_time")
@@ -296,8 +296,9 @@ class FluxLight(MotionLights):
 
             self.log("Turning on light with rgb: {} and brightness {}".format(rgb, brightness))
             transition = 30
-            if self.get_state(light) == "on":
-                transition = 0
+            if self.get_state(light) == "off":
+                transition = 1
             self.turn_on(light, rgb_color=rgb, brightness=brightness, transition=transition)
+#            self.turn_on(light, xy_color=[x_val,y_val], brightness=brightness, transition=transition)
             if self._timeout is not None:
                 self.cancel_timer(self._timeout)
