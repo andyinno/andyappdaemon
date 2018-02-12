@@ -150,9 +150,9 @@ class FluxLight(MotionLights):
 class BedroomLight(FluxLight):
     pass
 
-class LivingroomLight(FluxLight):
+class KodiFluxedLight(FluxLight):
     def initialize(self):
-        super(LivingroomLight, self).initialize()
+        super(KodiFluxedLight, self).initialize()
         self._kodi = self.args.get("kodi", None)
 
         self.log("Got kodi {}".format(self._kodi))
