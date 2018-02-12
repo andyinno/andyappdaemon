@@ -137,7 +137,7 @@ class FluxLight(MotionLights):
     def initialize(self):
         print("FluxLight initialize")
         super(FluxLight, self).initialize()
-        self._fluxer_service = self.args.get("fluxer", None)
+        self._fluxer_service = self.args.get("fluxer", [])
 
         self.log("Got fluxer {}".format(self._fluxer_service))
 
@@ -145,4 +145,5 @@ class FluxLight(MotionLights):
         self.log("FluxLight turn on lights")
         super(FluxLight, self).turn_on_lights()
         if (self._fluxer_service is not None):
-            self.call_service(self._fluxer_service)
+            for item in self._fluxer_service:
+                self.call_service(item)
