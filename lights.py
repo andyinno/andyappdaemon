@@ -139,7 +139,7 @@ class FluxLight(MotionLights):
         super(FluxLight, self).initialize()
         self._fluxer_service = self.args.get("fluxer", None)
 
-        self.log("Got fluxer {}".format(self._fluxer))
+        self.log("Got fluxer {}".format(self._fluxer_service))
 
     def turn_on_lights(self):
         self.log("FluxLight turn on lights")
