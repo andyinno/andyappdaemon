@@ -1,6 +1,5 @@
 import appdaemon.appapi as appapi
 import datetime
-import math
 
 
 class MotionLights(appapi.AppDaemon):
@@ -147,3 +146,23 @@ class FluxLight(MotionLights):
         if (self._fluxer_service is not None):
             for item in self._fluxer_service:
                 self.call_service(item)
+
+class BedroomLight(FluxLight):
+    pass
+
+class LivingroomLight(FluxLight):
+    def initialize(self):
+        super(LivingroomLight, self).initialize()
+        self._kodi = self.args.get("kodi", None)
+
+        self.log("Got kodi {}".format(self._kodi))
+        self.listen_state(self.kodi_playing, entity=self._kodi, new="playing")
+
+    def kodi_playing(self):
+        for light in self._lights:
+            self.turn_off(light)
+        self.turn_on(self._disabler)
+
+    def kodi_idling(self):
+        self.turn_off(self._disabler)
+        self.turn_on_lights()
