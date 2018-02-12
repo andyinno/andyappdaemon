@@ -158,11 +158,11 @@ class KodiFluxedLight(FluxLight):
         self.log("Got kodi {}".format(self._kodi))
         self.listen_state(self.kodi_playing, entity=self._kodi, new="playing")
 
-    def kodi_playing(self):
+    def kodi_playing(self, kwargs):
         for light in self._lights:
             self.turn_off(light)
         self.turn_on(self._disabler)
 
-    def kodi_idling(self):
+    def kodi_idling(self, kwargs):
         self.turn_off(self._disabler)
         self.turn_on_lights()
