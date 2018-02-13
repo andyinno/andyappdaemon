@@ -49,19 +49,28 @@ class MotionLights(appapi.AppDaemon):
             self.log("room is too bright for lights. luma %d" % (luma))
 
             # if lights was already on... don't let the timer expire but reload it instead.
-            if self._timeout is not None:
-                self.cancel_timer(self._timeout)
-                self._timeout = self.run_in(self.light_off, 300)
+            self.retrigger_timer()
             return
 
         self.log("luma %d is ok for controlling lights." % (luma))
         self.turn_on_lights()
 
-    def turn_on_lights(self):
-        for light in self._lights:
-            self.turn_on(light)
+    def delete_timer(self):
         if self._timeout is not None:
             self.cancel_timer(self._timeout)
+
+    def retrigger_timer(self):
+        self.delete_timer()
+        self._timeout = self.run_in(self.light_off, 300)
+
+    def turn_on_lights(self, brightness=None):
+        for light in self._lights:
+            if brightness is not None:
+                self.turn_on(light, brightness=brightness)
+            else:
+                self.turn_on(light)
+        if self._timeout is not None:
+            self.delete_timer(self._timeout)
 
     def demotion(self, entity, attribute, old, new, kwargs):
         if self.get_state(self._disabler) == 'on':
@@ -74,6 +83,10 @@ class MotionLights(appapi.AppDaemon):
         if self.get_state(self._disabler) == 'on':
             self.log("Controlling lights is disabled")
             return
+        if self.get_state(self._motion) == 'on':
+            return self.retrigger_timer()
+
+
         self.log("Timer ended.")
         self.cancel_timer(self._timeout)
         self._timeout = None
@@ -108,11 +121,11 @@ class NightLight(MotionLights):
         self.log("Got rgbcolor_value {}".format(self._rgbcolor_value))
         self.log("Got lowrgbcolor_value {}".format(self._lowrgbcolor_value))
 
-    def turn_on_lights(self):
+    def turn_on_lights(self, brightness=None):
         self.log("turn on lights")
         now = self.time()
 
-        if self._brightlight_end > now and now > self._brightlight_start:
+        if self._brightlight_end > now > self._brightlight_start:
             brightness = self._bright_value
             color = self._rgbcolor_value
         else:
@@ -140,15 +153,17 @@ class FluxLight(MotionLights):
 
         self.log("Got fluxer {}".format(self._fluxer_service))
 
-    def turn_on_lights(self):
+    def turn_on_lights(self, brightness=None):
         self.log("FluxLight turn on lights")
         super(FluxLight, self).turn_on_lights()
-        if (self._fluxer_service is not None):
+        if self._fluxer_service is not None:
             for item in self._fluxer_service:
                 self.call_service(item)
 
+
 class BedroomLight(FluxLight):
     pass
+
 
 class KodiFluxedLight(FluxLight):
     def initialize(self):
@@ -166,4 +181,4 @@ class KodiFluxedLight(FluxLight):
 
     def kodi_idling(self, entity, attribute, old, new, kwargs):
         self.turn_off(self._disabler)
-        self.turn_on_lights()
+        self.turn_on_lights(brightness=10)
