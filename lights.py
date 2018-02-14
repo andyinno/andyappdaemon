@@ -63,14 +63,10 @@ class MotionLights(appapi.AppDaemon):
         self.delete_timer()
         self._timeout = self.run_in(self.light_off, 300)
 
-    def turn_on_lights(self, brightness=None):
+    def turn_on_lights(self):
         for light in self._lights:
-            if brightness is not None:
-                self.turn_on(light, brightness=brightness)
-            else:
-                self.turn_on(light)
-        if self._timeout is not None:
-            self.delete_timer(self._timeout)
+            self.turn_on(light)
+        self.delete_timer()
 
     def demotion(self, entity, attribute, old, new, kwargs):
         if self.get_state(self._disabler) == 'on':
@@ -153,7 +149,7 @@ class FluxLight(MotionLights):
 
         self.log("Got fluxer {}".format(self._fluxer_service))
 
-    def turn_on_lights(self, brightness=None):
+    def turn_on_lights(self):
         self.log("FluxLight turn on lights")
         super(FluxLight, self).turn_on_lights()
         if self._fluxer_service is not None:
@@ -181,4 +177,4 @@ class KodiFluxedLight(FluxLight):
 
     def kodi_idling(self, entity, attribute, old, new, kwargs):
         self.turn_off(self._disabler)
-        self.turn_on_lights(brightness=10)
+        self.turn_on_lights()
