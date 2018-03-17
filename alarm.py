@@ -34,9 +34,9 @@ class AlarmSystem(appapi.AppDaemon):
         self._silent_control = self.args.get("silent_control", None)
         self._notify_service = self.args.get("notify_service", None)
         self._notify_title = self.args.get(
-            "notify_title", "AlarmSystem triggered, possible intruder")
+            "notify_title", "Allarme! Possibile Intrusione")
         self._notify_body = self.args.get(
-            "notify_body", "AlarmSystem triggered, possible intruder")
+            "notify_body", "Allarme! Possibile Intrusione")
 
         # xiaomi specific
         self._xiaomi_aqara_gw_mac = self.args.get("xiaomi_aqara_gw_mac", None)
@@ -98,6 +98,7 @@ class AlarmSystem(appapi.AppDaemon):
         self._flash_warning_handle = None
         self._sensor_handles = {}
         self.set_alarm_light_color_based_on_state()
+
 
     def start_armed_home_sensors_listener(self):
         for sensor in self._armed_home_sensors:
@@ -266,7 +267,8 @@ class AlarmSystem(appapi.AppDaemon):
         self.set_alarm_light_color_based_on_state()
 
         if self._notify_service is not None:
-            self.call_service(self._notify_service, title=self._notify_title, message=self._notify_body)
+            self.call_service(self._notify_service, payload=self._notify_title, topic="homeassistant/OnePlus3/notification", qos=0, retain=0)
+#            self.call_service(self._notify_service, title=self._notify_title, message=self._notify_body)
 
     def alarm_state_from_armed_home_to_pending_callback(self, entity, attribute, old, new, kwargs):
         self.log("Callback alarm_state_from_armed_home_to_pending from {}:{} {}->{}".format(
