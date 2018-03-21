@@ -1,8 +1,9 @@
-import appdaemon.appapi as appapi
+import appdaemon.plugins.hass.hassapi as hass
+
 import datetime
 
 
-class MotionLights(appapi.AppDaemon):
+class MotionLights(hass.Hass):
     """
     This class keeps track of different lights managed by a motion sensor.
     the luminosity in the room must be lower of the luminosity_min value passed in the
@@ -25,6 +26,7 @@ class MotionLights(appapi.AppDaemon):
         self.log("Got disabler sensor {}".format(self._disabler))
         self.listen_state(self.motion, entity=self._motion, new="on")
         self.listen_state(self.demotion, entity=self._motion, new="off")
+        self._re_check = None
         i = 0
         for item in self._luminosity:
             self.listen_state(self.luminosity, item, index=i)
@@ -37,6 +39,10 @@ class MotionLights(appapi.AppDaemon):
     def motion(self, entity, attribute, old, new, kwargs):
         self.log("Motion detected")
         luma = 0
+        if self._re_check is not None:
+            self.cancel_timer(self._re_check)
+            self._re_check = None
+
         for val in self._luma_val:
             if int(val) > int(luma):
                 luma = val
@@ -82,12 +88,24 @@ class MotionLights(appapi.AppDaemon):
         if self.get_state(self._motion) == 'on':
             return self.retrigger_timer()
 
-
         self.log("Timer ended.")
         self.cancel_timer(self._timeout)
         self._timeout = None
         for light in self._lights:
             self.turn_off(light)
+        self._re_check = self.run_in(self.verify_lights_off, 60)
+
+    def verify_lights_off(self, kwargs):
+        retrigger = False
+        for light in self._lights:
+            if self.get_state(light) == 'on':
+                retrigger = True
+                self.turn_off(light)
+                self.log("Lights was not off. Retry to turn them off now.")
+
+        if retrigger:
+            self._re_check = self.run_in(self.verify_lights_off, 60)
+
 
     def luminosity(self, entity, attribute, old, new, kwargs):
         self.log("Got luminosity for " + entity + " " + new)
@@ -155,25 +173,52 @@ class FluxLight(MotionLights):
         if self._fluxer_service is not None:
             for item in self._fluxer_service:
                 self.call_service(item)
-
+        self.delete_timer()
 
 class BedroomLight(FluxLight):
-    pass
+    def initialize(self):
+        super(BedroomLight, self).initialize()
+        self._daily = self.args.get("daily_sensor", None)
+        self._home_trackers = self.args.get("sleep_detect", [])
+        self.log("Got daily sensor {}".format(self._daily))
+        self.listen_state(self.daily_light, entity=self._daily, new="on")
+        self.listen_state(self.demotion, entity=self._motion, new="off")
+
+        self.log("Got  {}".format(self._home_trackers))
+
+    def daily_light(self, entity, attribute, old, new, kwargs):
+        for item in self._home_trackers:
+            if self.get_state(item) == "on":
+                self.log("Someone is sleeping. Turn off motion sensor")
+                return
+        self.motion(entity, attribute, old, new, kwargs)
+        self.delete_timer()
+
+    def light_off(self, kwargs):
+        if self.get_state(self._home_trackers) == 'on':
+            return self.retrigger_timer()
+        super(BedroomLight, self).light_off(kwargs)
 
 
 class KodiFluxedLight(FluxLight):
     def initialize(self):
         super(KodiFluxedLight, self).initialize()
         self._kodi = self.args.get("kodi", None)
+        self._locker = self.args.get("lockers", [])
 
         self.log("Got kodi {}".format(self._kodi))
         self.listen_state(self.kodi_playing, entity=self._kodi, new="playing")
         self.listen_state(self.kodi_idling, entity=self._kodi, new="paused")
 
     def kodi_playing(self, entity, attribute, old, new, kwargs):
-        for light in self._lights:
-            self.turn_off(light)
-        self.turn_on(self._disabler)
+        lock = False
+        for item in self._locker:
+            if (self.get_state(item) == "on"):
+                lock = True
+        if lock is not True:
+            for light in self._lights:
+                self.turn_off(light)
+            self.turn_on(self._disabler)
 
     def kodi_idling(self, entity, attribute, old, new, kwargs):
         self.turn_off(self._disabler)

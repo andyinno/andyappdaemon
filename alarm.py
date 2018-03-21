@@ -1,4 +1,4 @@
-import appdaemon.appapi as appapi
+import appdaemon.plugins.hass.hassapi as hass
 
 #
 # This file is not created by me but by runningman84.
@@ -11,7 +11,7 @@ import appdaemon.appapi as appapi
 #
 
 
-class AlarmSystem(appapi.AppDaemon):
+class AlarmSystem(hass.Hass):
 
     def initialize(self):
         self.log("Hello from AlarmSystem")
@@ -267,7 +267,7 @@ class AlarmSystem(appapi.AppDaemon):
         self.set_alarm_light_color_based_on_state()
 
         if self._notify_service is not None:
-            self.call_service(self._notify_service, payload=self._notify_title, topic="homeassistant/OnePlus3/notification", qos=0, retain=0)
+            self.call_service(self._notify_service, payload=self._notify_title, topic="homeassistant/OnePlus3/notification", qos=2, retain=0)
 #            self.call_service(self._notify_service, title=self._notify_title, message=self._notify_body)
 
     def alarm_state_from_armed_home_to_pending_callback(self, entity, attribute, old, new, kwargs):
