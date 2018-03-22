@@ -195,7 +195,7 @@ class BedroomLight(FluxLight):
         if st:
             self.log("Someone is sleeping, lights goes red.")
             for light in self._lights:
-                self.turn_on(light, color="red", brightness="30")
+                self.turn_on(light, color_name="red", brightness="30")
         else:
             super(BedroomLight, self).turn_on_lights()
 
