@@ -13,6 +13,8 @@ class MotionLights(hass.Hass):
     """
     def initialize(self):
         print("MotionLights initialize")
+        self.log(self.anyone_home() )
+        self.log(self.noone_home())
         self._lights = self.args.get("lights", [])
         self._motion = self.args.get("motion", None)
         self._luminosity = self.args.get("luminosity", [])
@@ -185,6 +187,20 @@ class BedroomLight(FluxLight):
         self.listen_state(self.demotion, entity=self._motion, new="off")
 
         self.log("Got  {}".format(self._home_trackers))
+
+    def turn_on_lights(self):
+        st = False
+        for item in self._home_trackers:
+            if (self.get_state(item) == "on"):
+                st = st or True
+
+        if st:
+            self.log("Someone is sleeping, lights goes red.")
+            for light in self._lights:
+                self.turn_on(light, color="red", brightness="30")
+        else:
+            super(BedroomLight, self).turn_on_lights()
+
 
     def daily_light(self, entity, attribute, old, new, kwargs):
         for item in self._home_trackers:
