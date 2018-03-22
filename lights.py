@@ -13,8 +13,6 @@ class MotionLights(hass.Hass):
     """
     def initialize(self):
         print("MotionLights initialize")
-        self.log(self.anyone_home() )
-        self.log(self.noone_home())
         self._lights = self.args.get("lights", [])
         self._motion = self.args.get("motion", None)
         self._luminosity = self.args.get("luminosity", [])
