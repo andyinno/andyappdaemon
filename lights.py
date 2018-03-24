@@ -223,6 +223,7 @@ class KodiFluxedLight(FluxLight):
         self.log("Got kodi {}".format(self._kodi))
         self.listen_state(self.kodi_playing, entity=self._kodi, new="playing")
         self.listen_state(self.kodi_idling, entity=self._kodi, new="paused")
+        self.listen_state(self.kodi_idling, entity=self._kodi, new="idle")
 
     def kodi_playing(self, entity, attribute, old, new, kwargs):
         lock = False
