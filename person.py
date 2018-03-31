@@ -20,8 +20,8 @@ class Person(hass.Hass):
         self.log("Peripheral sensors {}".format(self._peripheral_sensors))
 
         self.listen_state(self.family_changed_away, entity=self._family_tracker, old="home", new="not_home")
-        self.listen_state(self.family_changed_home, entity=self._family_tracker, old="home", new="home")
-        self.listen_state(self.person_changed_away, entity=self._tracker, old="not_home", new="not_home")
+        self.listen_state(self.family_changed_home, entity=self._family_tracker, old="not_home", new="home")
+        self.listen_state(self.person_changed_away, entity=self._tracker, old="home", new="not_home")
         self.listen_state(self.person_changed_home, entity=self._tracker, old="not_home", new="home")
         self.listen_state(self.door_opened, entity=self._door_sensor, new="off")
 
@@ -37,7 +37,7 @@ class Person(hass.Hass):
 
     def person_changed_away(self, entity, attribute, old, new, kwargs):
         self.log("{} state changed to away".format(self._name))
-        if (self.get_state(self._family_tracker) == "not_home"):
+        if self._pending_notification == True and self.get_state(self._family_tracker) == "not_home":
             self.notify("Molto probabilmente delle finestre sono rimaste aperte.", title="Avviso finestre",
                         name=self._notifier)
         self._pending_notification = False
