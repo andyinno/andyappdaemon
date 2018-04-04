@@ -115,44 +115,6 @@ class MotionLights(hass.Hass):
         self.log("Resetting the disabler")
         self.turn_off(self._disabler)
 
-
-class NightLight(MotionLights):
-    def initialize(self):
-        print("NightLight initialize")
-        super(NightLight, self).initialize()
-        self._brightlight_start = datetime.datetime.strptime(self.args.get("brightlight_start", "0:0:0"),
-                                                             "%H:%M:%S").time()
-        self._brightlight_end = datetime.datetime.strptime(self.args.get("brightlight_end", "0:0:0"), "%H:%M:%S").time()
-        self._bright_value = self.args.get("bright_value", 0)
-        self._lowbright_value = self.args.get("lowbright_value", 0)
-        self._rgbcolor_value = self.args.get("rgbcolor_value", 0)
-        self._lowrgbcolor_value = self.args.get("lowrgbcolor_value", 0)
-
-        self.log("Got starting time {}".format(self._brightlight_start))
-        self.log("Got ending time {}".format(self._brightlight_end))
-        self.log("Got bright_value  {}".format(self._bright_value))
-        self.log("Got lowbright_value {}".format(self._lowbright_value))
-        self.log("Got rgbcolor_value {}".format(self._rgbcolor_value))
-        self.log("Got lowrgbcolor_value {}".format(self._lowrgbcolor_value))
-
-    def turn_on_lights(self, brightness=None):
-        self.log("turn on lights")
-        now = self.time()
-
-        if self._brightlight_end > now > self._brightlight_start:
-            brightness = self._bright_value
-            color = self._rgbcolor_value
-        else:
-            brightness = self._lowbright_value
-            color = self._lowrgbcolor_value
-
-        for light in self._lights:
-            self.log("turning on light {} with {} {}".format(light, brightness, color))
-            self.turn_on(light, color_name=color, brightness=brightness)
-        if self._timeout is not None:
-            self.cancel_timer(self._timeout)
-
-
 class FluxLight(MotionLights):
     """ Flux and Motion lights
 
@@ -198,6 +160,7 @@ class BedroomLight(FluxLight):
                 self.turn_on(light, color_name="red", brightness="30")
         else:
             super(BedroomLight, self).turn_on_lights()
+        self.delete_timer()
 
 
     def daily_light(self, entity, attribute, old, new, kwargs):
