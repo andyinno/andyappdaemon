@@ -47,22 +47,6 @@ class AlarmSystem(hass.Hass):
         self._xiaomi_aqara_disarmed_ringtone_id = self.args.get(
             "xiaomi_aqara_disarmed_ringtone_id", 11)
 
-        # log current config
-        self.log("Got armed_home sensors {}".format(
-            self._armed_home_sensors))
-        self.log("Got armed_away sensors {}".format(
-            self._armed_away_sensors))
-        self.log("Got device trackers {}".format(self._device_trackers))
-        self.log("Got {} device_trackers home and {} device_trackers not home".format(
-            self.count_home_device_trackers(), self.count_not_home_device_trackers()))
-        self.log("Got guest_mode {}".format(self.in_guest_mode()))
-        self.log("Got vacation_mode {}".format(self.in_vacation_mode()))
-        self.log("Got silent mode {}".format(self.in_silent_mode()))
-        self.log("Got info volume {}".format(self.get_info_volume()))
-        self.log("Got alarm volume {}".format(self.get_alarm_volume()))
-        self.log("Got notify service {}".format(self._notify_service))
-        self.log("Got alarm state {}".format(self.get_alarm_state()))
-
         self.listen_state(self.alarm_state_triggered_callback,
                           self._alarm_control_panel, new="triggered")
         self.listen_state(self.alarm_state_from_armed_home_to_pending_callback,
@@ -219,7 +203,6 @@ class AlarmSystem(hass.Hass):
         for light in self._alarm_lights:
             self.toggle(light)
         self.flashcount += 1
-        self.log("Flash warning count {}".format(self.flashcount))
         if self.flashcount < 60:
             self._flash_warning_handle = self.run_in(self.flash_warning, 1)
 
@@ -241,8 +224,6 @@ class AlarmSystem(hass.Hass):
         #
 
     def start_flash_warning(self, color_name="red", brightness_pct=100):
-        self.log("Starting flash warning with color {} and brightnes {}".format(
-            color_name, brightness_pct))
         self.stop_flash_warning()
         self.flashcount = 0
         self.set_alarm_light_color(color_name, brightness_pct)
@@ -250,15 +231,11 @@ class AlarmSystem(hass.Hass):
 
     def stop_flash_warning(self):
         if self._flash_warning_handle is not None:
-            self.log("Stopping flash warning timer")
             self.cancel_timer(self._flash_warning_handle)
             self.flashcount = 60
             self._flash_warning_handle = None
 
     def alarm_state_triggered_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback alarm_state_triggered from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/play_ringtone",
                               ringtone_id=self.get_xiaomi_aqara_trggered_ringtone_id(), ringtone_vol=self.get_alarm_volume(), gw_mac=self.get_xiaomi_aqara_gw_mac())
@@ -271,9 +248,6 @@ class AlarmSystem(hass.Hass):
 #            self.call_service(self._notify_service, title=self._notify_title, message=self._notify_body)
 
     def alarm_state_from_armed_home_to_pending_callback(self, entity, attribute, old, new, kwargs):
-        self.log("Callback alarm_state_from_armed_home_to_pending from {}:{} {}->{}".format(
-            entity, attribute, old, new))
-
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/play_ringtone",
                               ringtone_id=self.get_xiaomi_aqara_pending_ringtone_id(), ringtone_vol=self.get_info_volume(), gw_mac=self.get_xiaomi_aqara_gw_mac())
@@ -281,9 +255,6 @@ class AlarmSystem(hass.Hass):
         self.start_flash_warning("red")
 
     def alarm_state_from_armed_away_to_pending_callback(self, entity, attribute, old, new, kwargs):
-        self.log("Callback alarm_state_from_armed_away_to_pending from {}:{} {}->{}".format(
-            entity, attribute, old, new))
-
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/play_ringtone",
                               ringtone_id=self.get_xiaomi_aqara_pending_ringtone_id(), ringtone_vol=self.get_info_volume(), gw_mac=self.get_xiaomi_aqara_gw_mac())
@@ -291,9 +262,6 @@ class AlarmSystem(hass.Hass):
         self.start_flash_warning("red")
 
     def alarm_state_from_disarmed_to_pending_callback(self, entity, attribute, old, new, kwargs):
-        self.log("Callback alarm_state_from_disarmed_to_pending from {}:{} {}->{}".format(
-            entity, attribute, old, new))
-
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/play_ringtone",
                               ringtone_id=self.get_xiaomi_aqara_pending_ringtone_id(), ringtone_vol=self.get_info_volume(), gw_mac=self.get_xiaomi_aqara_gw_mac())
@@ -301,9 +269,6 @@ class AlarmSystem(hass.Hass):
         self.start_flash_warning("yellow", 50)
 
     def alarm_state_disarmed_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback alarm_state_disarmed from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/stop_ringtone",
                               gw_mac=self.get_xiaomi_aqara_gw_mac())
@@ -316,10 +281,7 @@ class AlarmSystem(hass.Hass):
         self.set_alarm_light_color_based_on_state()
 
     def alarm_state_armed_away_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback alarm_state_armed_away from {}:{} {}->{}".format(entity, attribute, old, new))
-
-        if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
+       if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/stop_ringtone",
                               gw_mac=self.get_xiaomi_aqara_gw_mac())
 
@@ -329,9 +291,6 @@ class AlarmSystem(hass.Hass):
         self.set_alarm_light_color_based_on_state()
 
     def alarm_state_armed_home_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback alarm_state_armed_home from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
             self.call_service("xiaomi_aqara/stop_ringtone",
                               gw_mac=self.get_xiaomi_aqara_gw_mac())
@@ -342,94 +301,55 @@ class AlarmSystem(hass.Hass):
         self.set_alarm_light_color_based_on_state()
 
     def trigger_alarm_while_armed_away_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback trigger_alarm_while_armed_away from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if(self.is_alarm_armed_away() == False):
-            self.log("Ignoring status {} of {} because alarm system is in state {}".format(
-                new, entity, self.get_alarm_state()))
             return
 
         self.call_service("alarm_control_panel/alarm_trigger",
                           entity_id=self._alarm_control_panel)
 
     def trigger_alarm_while_armed_home_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback trigger_alarm_while_armed_home from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if(self.is_alarm_armed_home() == False):
-            self.log("Ignoring status {} of {} because alarm system is in state {}".format(
-                new, entity, self.get_alarm_state()))
             return
 
         self.call_service("alarm_control_panel/alarm_trigger",
                           entity_id=self._alarm_control_panel)
 
     def alarm_arm_away_button_callback(self, event_name, data, kwargs):
-        self.log("Callback alarm_arm_away_button_callback from {}:{} {}".format(
-            event_name, data['entity_id'], data['click_type']))
-
         if(self.is_alarm_disarmed() == False):
-            self.log("Ignoring event {} of {} because alarm system is in state {}".format(
-                event_name, data['entity_id'], self.get_alarm_state()))
             return
 
         self.call_service("alarm_control_panel/alarm_arm_away",
                           entity_id=self._alarm_control_panel, code=self._alarm_pin)
 
     def alarm_disarm_button_callback(self, event_name, data, kwargs):
-        self.log("Callback alarm_disarm_button_callback from {}:{} {}".format(
-            event_name, data['entity_id'], data['click_type']))
-
         if(self.is_alarm_disarmed()):
-            self.log("Ignoring event {} of {} because alarm system is in state {}".format(
-                event_name, data['entity_id'], self.get_alarm_state()))
             return
 
         self.call_service("alarm_control_panel/alarm_disarm",
                           entity_id=self._alarm_control_panel, code=self._alarm_pin)
 
     def alarm_arm_home_button_callback(self, event_name, data, kwargs):
-        self.log("Callback alarm_arm_home_button from {}:{} {}".format(
-            event_name, data['entity_id'], data['click_type']))
-
         if(self.is_alarm_disarmed() == False):
-            self.log("Ignoring event {} of {} because alarm system is in state {}".format(
-                event_name, data['entity_id'], self.get_alarm_state()))
             return
 
         self.call_service("alarm_control_panel/alarm_arm_home",
                           entity_id=self._alarm_control_panel, code=self._alarm_pin)
 
     def alarm_arm_away_auto_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback alarm_arm_away_auto from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if(self.is_alarm_disarmed() == False):
-            self.log("Ignoring status {} of {} because alarm system is in state {}".format(
-                new, entity, self.get_alarm_state()))
             return
 
         if(self.count_home_device_trackers() > 0):
-            self.log("Ignoring status {} of {} because {} device_trackers are still at home".format(
-                new, entity, self.count_home_device_trackers()))
             return
 
         if(self.in_guest_mode()):
-            self.log("Ignoring status {} of {} because {} we have guests".format(
-                new, entity, self.count_home_device_trackers()))
             return
 
         self.call_service("alarm_control_panel/alarm_arm_away",
                           entity_id=self._alarm_control_panel, code=self._alarm_pin)
 
     def alarm_disarm_auto_callback(self, entity, attribute, old, new, kwargs):
-        self.log(
-            "Callback alarm_disarm_auto from {}:{} {}->{}".format(entity, attribute, old, new))
-
         if self.is_alarm_armed_away() == False:
-            self.log("Ignoring status {} of {} because alarm system is in state {}".format(
-                new, entity, self.get_alarm_state()))
             return
 
         self.call_service("alarm_control_panel/alarm_disarm",

@@ -20,10 +20,6 @@ class MotionLights(hass.Hass):
         self._timeout = None
         self._luma_val = []
         self._luminosity_min = self.args.get("luminosity_min", 20)
-        self.log("Got controlled lights {}".format(self._lights))
-        self.log("Got controller motion sensor {}".format(self._motion))
-        self.log("Got luminosity sensor {}".format(self._luminosity))
-        self.log("Got disabler sensor {}".format(self._disabler))
         self.listen_state(self.motion, entity=self._motion, new="on")
         self.listen_state(self.demotion, entity=self._motion, new="off")
         self._re_check = None
@@ -37,7 +33,6 @@ class MotionLights(hass.Hass):
         self.run_daily(self.reset_status, time)
 
     def motion(self, entity, attribute, old, new, kwargs):
-        self.log("Motion detected")
         luma = 0
         if self._re_check is not None:
             self.cancel_timer(self._re_check)
@@ -48,17 +43,14 @@ class MotionLights(hass.Hass):
                 luma = val
 
         if self.get_state(self._disabler) == 'on':
-            self.log("Controlling lights is disabled")
             return
 
         if luma > self._luminosity_min:
-            self.log("room is too bright for lights. luma %d" % (luma))
 
             # if lights was already on... don't let the timer expire but reload it instead.
             self.retrigger_timer()
             return
 
-        self.log("luma %d is ok for controlling lights." % (luma))
         self.turn_on_lights()
 
     def delete_timer(self):
@@ -76,19 +68,15 @@ class MotionLights(hass.Hass):
 
     def demotion(self, entity, attribute, old, new, kwargs):
         if self.get_state(self._disabler) == 'on':
-            self.log("Controlling lights is disabled")
-            return
-        self.log("Motion switched off, starting timer")
+             return
         self._timeout = self.run_in(self.light_off, 300)
 
     def light_off(self, kwargs):
         if self.get_state(self._disabler) == 'on':
-            self.log("Controlling lights is disabled")
             return
         if self.get_state(self._motion) == 'on':
             return self.retrigger_timer()
 
-        self.log("Timer ended.")
         self.cancel_timer(self._timeout)
         self._timeout = None
         for light in self._lights:
@@ -100,19 +88,18 @@ class MotionLights(hass.Hass):
         for light in self._lights:
             if self.get_state(light) == 'on':
                 retrigger = True
-                self.turn_off(light)
-                self.log("Lights was not off. Retry to turn them off now.")
+                if self.get_state(self._disabler) == "off":
+                    self.turn_off(light)
+                    self.log("Lights was not off. Retry to turn them off now.")
 
         if retrigger:
             self._re_check = self.run_in(self.verify_lights_off, 60)
 
 
     def luminosity(self, entity, attribute, old, new, kwargs):
-        self.log("Got luminosity for " + entity + " " + new)
         self._luma_val[int(kwargs["index"])] = float(new)
 
     def reset_status(self, kwargs):
-        self.log("Resetting the disabler")
         self.turn_off(self._disabler)
 
 class FluxLight(MotionLights):
@@ -127,10 +114,8 @@ class FluxLight(MotionLights):
         super(FluxLight, self).initialize()
         self._fluxer_service = self.args.get("fluxer", [])
 
-        self.log("Got fluxer {}".format(self._fluxer_service))
 
     def turn_on_lights(self):
-        self.log("FluxLight turn on lights")
         super(FluxLight, self).turn_on_lights()
         if self._fluxer_service is not None:
             for item in self._fluxer_service:
@@ -142,11 +127,9 @@ class BedroomLight(FluxLight):
         super(BedroomLight, self).initialize()
         self._daily = self.args.get("daily_sensor", None)
         self._home_trackers = self.args.get("sleep_detect", [])
-        self.log("Got daily sensor {}".format(self._daily))
         self.listen_state(self.daily_light, entity=self._daily, new="on")
         self.listen_state(self.demotion, entity=self._motion, new="off")
 
-        self.log("Got  {}".format(self._home_trackers))
 
     def turn_on_lights(self):
         st = False
@@ -183,7 +166,6 @@ class KodiFluxedLight(FluxLight):
         self._kodi = self.args.get("kodi", None)
         self._locker = self.args.get("lockers", [])
 
-        self.log("Got kodi {}".format(self._kodi))
         self.listen_state(self.kodi_playing, entity=self._kodi, new="playing")
         self.listen_state(self.kodi_idling, entity=self._kodi, new="paused")
         self.listen_state(self.kodi_idling, entity=self._kodi, new="idle")

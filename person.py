@@ -11,6 +11,7 @@ class Person(hass.Hass):
         self._door_sensor = self.args.get("door_sensor", None)
         self._peripheral_sensors = self.args.get("peripheral_sensors", None)
         self._pending_notification = False
+        self._back_home = False
 
         self.log("Got name {}".format(self._name))
         self.log("Got trackers {}".format(self._tracker))
@@ -33,6 +34,7 @@ class Person(hass.Hass):
 
     def person_changed_home(self, entity, attribute, old, new, kwargs):
         self.log("{} state changed to home".format(self._name))
+        self._back_home = True
 
 
     def person_changed_away(self, entity, attribute, old, new, kwargs):
@@ -41,9 +43,12 @@ class Person(hass.Hass):
             self.notify("Molto probabilmente delle finestre sono rimaste aperte.", title="Avviso finestre",
                         name=self._notifier)
         self._pending_notification = False
+        self._back_home = False
 
     def door_opened(self, entity, attribute, old, new, kwargs):
         self.log("{} opened".format(self._door_sensor))
         if (self.get_state(self._tracker) == "home"):
             self._pending_notification = True
-
+        if self._back_home:
+            self.notify("Ciao {}! Come procede la giornata? ".format(self._name))
+        self._back_home = False
