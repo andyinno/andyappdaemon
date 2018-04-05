@@ -285,10 +285,10 @@ class AlarmSystem(hass.Hass):
             self.call_service("xiaomi_aqara/stop_ringtone",
                               gw_mac=self.get_xiaomi_aqara_gw_mac())
 
-        self.stop_flash_warning()
-        self.stop_sensors_listener()
-        self.start_armed_away_sensors_listener()
-        self.set_alarm_light_color_based_on_state()
+       self.stop_flash_warning()
+       self.stop_sensors_listener()
+       self.start_armed_away_sensors_listener()
+       self.set_alarm_light_color_based_on_state()
 
     def alarm_state_armed_home_callback(self, entity, attribute, old, new, kwargs):
         if self.get_xiaomi_aqara_gw_mac() is not None and self.in_silent_mode() == False:
