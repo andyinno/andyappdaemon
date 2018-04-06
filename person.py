@@ -50,5 +50,5 @@ class Person(hass.Hass):
         if (self.get_state(self._tracker) == "home"):
             self._pending_notification = True
         if self._back_home:
-            self.notify("Ciao {}! Come procede la giornata? ".format(self._name))
+            self.notify("Ciao {}! Come procede la giornata? ".format(self._name), name=self._notifier)
         self._back_home = False
