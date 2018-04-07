@@ -85,12 +85,15 @@ class MotionLights(hass.Hass):
 
     def verify_lights_off(self, kwargs):
         retrigger = False
+        if self.get_state(self._motion) == "on":
+            return
         for light in self._lights:
             if self.get_state(light) == 'on':
                 retrigger = True
                 if self.get_state(self._disabler) == "off":
-                    self.turn_off(light)
-                    self.log("Lights was not off. Retry to turn them off now.")
+                        self.turn_off(light)
+                        self.log("Lights was not off. Retry to turn them off now.")
+
 
         if retrigger:
             self._re_check = self.run_in(self.verify_lights_off, 60)
