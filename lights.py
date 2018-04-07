@@ -155,9 +155,17 @@ class BedroomLight(FluxLight):
         self.delete_timer()
 
     def light_off(self, kwargs):
-        if self.get_state(self._home_trackers) == 'on':
+        if self.get_state(self._daily) == 'on':
             return self.retrigger_timer()
         super(BedroomLight, self).light_off(kwargs)
+
+    def demotion(self, entity, attribute, old, new, kwargs):
+        if self.get_state(self._daily) == 'on' or self.get_state(self._motion) == 'on':
+            return
+        if self.get_state(self._disabler) == 'on':
+            return
+        self._timeout = self.run_in(self.light_off, 300)
+
 
 
 class KodiFluxedLight(FluxLight):
