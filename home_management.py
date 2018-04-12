@@ -26,20 +26,25 @@ class Room(hass.Hass):
         self.log("{} detected motion".format(self._name))
 
         if self._timer is not None:
+            self.log("Cancel timer")
             self.cancel_timer(self._timer)
         self._timer = self.run_in(self.demotion, 300)
         if self._illumination is not None:
+            self.log("Have illumination test")
             if float(self.get_state(self._illumination)) > self._max_ill:
                 self.log("Room {} is too bright.".format(self._name))
                 return
 
+        self.log("Turn on the light {}".format(self._light))
         self.turn_on(self._light)
         if self._flux is not None:
+            self.log("Have flux service")
             self.call_service(self._flux)
 
     def demotion(self, kwargs):
         self.log("{}  timer ended".format(self._name))
-        self.turn_off(self._light)
+        if self.get_state(self._motion_sensor) == 'off':
+            self.turn_off(self._light)
         if (self.get_state(self._light)=='on'):
             self._timer = self.run_in(self.demotion, 10)
 
