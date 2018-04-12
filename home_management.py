@@ -29,7 +29,7 @@ class Room(hass.Hass):
             self.cancel_timer(self._timer)
         self._timer = self.run_in(self.demotion, 300)
         if self._illumination is not None:
-            if int(self.get_state(self._illumination)) > self._max_ill:
+            if float(self.get_state(self._illumination)) > self._max_ill:
                 self.log("Room {} is too bright.".format(self._name))
                 return
 
