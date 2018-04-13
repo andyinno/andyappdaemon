@@ -12,6 +12,7 @@ class Room(hass.Hass):
         self._flux = self.args.get("flux", None)
 
         self.listen_state(self.motion, entity=self._motion_sensor, new='on')
+        self.run_every(self.demotion, self.datetime(), 300)
         self._timer = None
 
         self.log("Got name {}".format(self._name))
