@@ -12,7 +12,7 @@ class Room(hass.Hass):
         self._flux = self.args.get("flux", None)
 
         self.listen_state(self.motion, entity=self._motion_sensor, new='on')
-        self.run_every(self.demotion, self.datetime(), 300)
+        self.run_every(self.demotion, self.datetime(), 900)
         self._timer = None
 
         self.log("Got name {}".format(self._name))
@@ -47,7 +47,7 @@ class Room(hass.Hass):
         if self.get_state(self._motion_sensor) == 'off':
             self.turn_off(self._light)
         if (self.get_state(self._light)=='on'):
-            self._timer = self.run_in(self.demotion, 10)
+            self._timer = self.run_in(self.demotion, 60)
 
 class BedRoomNight(Room):
     def motion(self, entity, attribute, old, new, kwargs):
