@@ -31,6 +31,7 @@ class Room(hass.Hass):
         self.log("{} detected motion".format(self._name))
 
         if self._timer is not None:
+            self.log("Cancel timer")
             self.cancel_timer(self._timer)
         self._timer = self.run_in(self.demotion, 300)
         if self._illumination is not None:
