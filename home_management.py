@@ -12,6 +12,8 @@ class Room(hass.Hass):
         self._flux = self.args.get("flux", None)
 
         self.listen_state(self.motion, entity=self._motion_sensor, new='on')
+        self.listen_state(self.illumination_changed, entity=self._illumination)
+        self.run_every(self.demotion, self.datetime(), 300)
         self._timer = None
 
         self.log("Got name {}".format(self._name))
@@ -22,11 +24,13 @@ class Room(hass.Hass):
         self.log("Got limit {}".format(self._max_ill))
         self._timer = self.run_in(self.demotion, 300)
 
+    def illumination_changed(self, entity, attribute, old, new, kwargs):
+        self.log("Illumination changed. Old {} new {}".format(old, new))
+
     def motion(self, entity, attribute, old, new, kwargs):
         self.log("{} detected motion".format(self._name))
 
         if self._timer is not None:
-            self.log("Cancel timer")
             self.cancel_timer(self._timer)
         self._timer = self.run_in(self.demotion, 300)
         if self._illumination is not None:
@@ -45,8 +49,14 @@ class Room(hass.Hass):
         self.log("{}  timer ended".format(self._name))
         if self.get_state(self._motion_sensor) == 'off':
             self.turn_off(self._light)
-        if (self.get_state(self._light)=='on'):
-            self._timer = self.run_in(self.demotion, 10)
+            if (self.get_state(self._light)=='on'):
+                if self._timer is not None:
+                    self.cancel_timer(self._timer)
+                self._timer = self.run_in(self.demotion, 10)
+        else:
+            if self._timer is not None:
+                self.cancel_timer(self._timer)
+            self._timer = self.run_in(self.demotion, 300)
 
 class BedRoomNight(Room):
     def motion(self, entity, attribute, old, new, kwargs):
