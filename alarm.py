@@ -347,6 +347,7 @@ class AlarmSystem(hass.Hass):
 
         self.call_service("alarm_control_panel/alarm_arm_away",
                           entity_id=self._alarm_control_panel, code=self._alarm_pin)
+        self.turn_on("switch.deluge_switch")
 
     def alarm_disarm_auto_callback(self, entity, attribute, old, new, kwargs):
         if self.is_alarm_armed_away() == False:
@@ -354,4 +355,4 @@ class AlarmSystem(hass.Hass):
 
         self.call_service("alarm_control_panel/alarm_disarm",
                           entity_id=self._alarm_control_panel, code=self._alarm_pin)
-
+        self.turn_off("switch.deluge_switch")
